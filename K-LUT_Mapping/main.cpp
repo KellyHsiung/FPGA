@@ -11,10 +11,10 @@ template <class T>
 bool compare(T* const&one, T* const&two){
     return one->getID() < two->getID();
 }
-enum KIND { PI, PO, GATE };
+// enum KIND { PI, PO, GATE };
 
 bool find(std::vector<NODE *> n, int id){
-    for(auto it = n.begin(); it != n.end(); ++it){
+    for(std::vector<NODE *>::iterator it = n.begin(); it != n.end(); ++it){
         if( (*it)->getID() == id ) return true;
     }
     return false;
@@ -47,12 +47,12 @@ int main(int argc, char** argv){
     //read PIs
     for(int i=0; i<PINum; ++i){
         file >> element;
-        nodes.push_back( new NODE(element, KIND::PI) );
+        nodes.push_back( new NODE(element, 0) );
     }
     //read POs
     for(int i=0; i<PONum; ++i){
         file >> element;
-        nodes.push_back( new NODE(element, KIND::PO) );
+        nodes.push_back( new NODE(element, 1) );
     }
 
     std::sort(nodes.begin(), nodes.end(), compare<NODE>);
@@ -70,19 +70,19 @@ int main(int argc, char** argv){
         fanin.push_back(temp);
 
         if(!find(nodes, target)){
-            NODE *tempNode = new NODE(target, KIND::GATE);
+            NODE *tempNode = new NODE(target, 2);
             nodes.push_back(tempNode);
         }
     }
     file.close();
 
     std::sort(nodes.begin(), nodes.end(), compare<NODE>);
-    for(auto FanIt = fanin.begin(); FanIt != fanin.end(); ++FanIt){
+    for(std::vector< std::vector<int> >::iterator FanIt = fanin.begin(); FanIt != fanin.end(); ++FanIt){
         NODE *temp = new NODE((*FanIt)[0]);
-        auto tempIter = lower_bound(nodes.begin(), nodes.end(), temp, compare<NODE>);
+        std::vector<NODE *>::iterator tempIter = lower_bound(nodes.begin(), nodes.end(), temp, compare<NODE>);
         
         NODE *fanTemp = new NODE((*FanIt)[1]);
-        auto fanIter = lower_bound(nodes.begin(), nodes.end(), fanTemp, compare<NODE>);
+        std::vector<NODE *>::iterator fanIter = lower_bound(nodes.begin(), nodes.end(), fanTemp, compare<NODE>);
 
         (*tempIter)->setFanin(0, (*fanIter) );
         delete fanTemp;
@@ -104,8 +104,8 @@ int main(int argc, char** argv){
     //greedy
     int K = atoi(argv[2]);
     std::queue<NODE*> nodeQueue;
-    for(auto it = nodes.begin(); it != nodes.end(); ++it){
-        if((*it)->getKind() == KIND::PO)
+    for(std::vector<NODE *>::iterator it = nodes.begin(); it != nodes.end(); ++it){
+        if((*it)->getKind() == 1)
             nodeQueue.push( (*it) );
     }
     file.open(argv[3], std::ifstream::out);
