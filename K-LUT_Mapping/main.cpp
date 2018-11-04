@@ -13,6 +13,13 @@ bool compare(T* const&one, T* const&two){
 }
 enum KIND { PI, PO, GATE };
 
+bool find(std::vector<NODE *> n, int id){
+    for(auto it = n.begin(); it != n.end(); ++it){
+        if( (*it)->getID() == id ) return true;
+    }
+    return false;
+}
+
 int main(int argc, char** argv){
 
     if(argc != 4){
@@ -28,7 +35,7 @@ int main(int argc, char** argv){
     }
     std::string text;
     file >> text;
-    if(text != "aag"){
+    if(text != "agg"){
         std::cout<<"Error: The format of input file is wrong!\n";
         file.close();
         return -1;
@@ -48,6 +55,8 @@ int main(int argc, char** argv){
         nodes.push_back( new NODE(element, KIND::PO) );
     }
 
+    std::sort(nodes.begin(), nodes.end(), compare<NODE>);
+
     //read connection between gates and PI PO
     std::vector< std::vector<int> > fanin;
     getline(file, text);
@@ -60,7 +69,7 @@ int main(int argc, char** argv){
         while( iss>>source ) temp.push_back(source);
         fanin.push_back(temp);
 
-        if(target > (PINum+PONum)){
+        if(!find(nodes, target)){
             NODE *tempNode = new NODE(target, KIND::GATE);
             nodes.push_back(tempNode);
         }
@@ -69,11 +78,24 @@ int main(int argc, char** argv){
 
     std::sort(nodes.begin(), nodes.end(), compare<NODE>);
     for(auto FanIt = fanin.begin(); FanIt != fanin.end(); ++FanIt){
-        nodes[ (*FanIt)[0]-1 ]->setFanin(0, nodes[ (*FanIt)[1]-1 ] );
+        NODE *temp = new NODE((*FanIt)[0]);
+        auto tempIter = lower_bound(nodes.begin(), nodes.end(), temp, compare<NODE>);
+        
+        NODE *fanTemp = new NODE((*FanIt)[1]);
+        auto fanIter = lower_bound(nodes.begin(), nodes.end(), fanTemp, compare<NODE>);
+
+        (*tempIter)->setFanin(0, (*fanIter) );
+        delete fanTemp;
+
         if( (*FanIt).size() == 3 ){
-            nodes[ (*FanIt)[0]-1 ]->setFanin(1, nodes[ (*FanIt)[2]-1 ] );
-            nodes[ (*FanIt)[0]-1 ]->setSize(2);
-        }else nodes[ (*FanIt)[0]-1 ]->setSize(1);
+            fanTemp = new NODE((*FanIt)[2]);
+            fanIter = lower_bound(nodes.begin(), nodes.end(), fanTemp, compare<NODE>);
+            (*tempIter)->setFanin(1, (*fanIter) );
+            delete fanTemp;
+            (*tempIter)->setSize(2);
+        }else (*tempIter)->setSize(1);
+
+        delete temp;
     }
     // for(auto it = nodes.begin(); it != nodes.end(); ++it) 
     //     (*it)->print();
