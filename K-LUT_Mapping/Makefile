@@ -1,5 +1,5 @@
-CPP = g++ -std=c++11
-CPPFLAGS = -Wall -O3
+CPP = g++ 
+CPPFLAGS = -Wall -std=c++11 -O3
 HERDERS = NODE.h
 SOURCES = main.cpp NODE.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -11,7 +11,7 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CPP) $(CPPFLAGS) $(OBJECTS) -o $@
 
 %.o: %.cpp %.h
-	$(CPP) $(CPPFLAGS) -c $<
+	$(CPP) $(CPPFLAGS) -c $< -o $@
 
 clean: 
 	rm -rf *.o $(EXECUTABLE)
