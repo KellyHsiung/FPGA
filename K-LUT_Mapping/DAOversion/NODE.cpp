@@ -8,6 +8,7 @@ NODE::NODE(int id, int kind){
     this->order = -1;
     this->kind = kind;
     this->done = false;
+    this->visited = false;
     this->fanin[0] = NULL;
     this->fanin[1] = NULL;
 }
@@ -19,6 +20,7 @@ NODE::NODE(int id){
     this->kind = -1;
     this->order = -1;
     this->done = false;
+    this->visited = false;
     this->fanin[0] = NULL;
     this->fanin[1] = NULL;
 }
@@ -28,13 +30,17 @@ int NODE::getInSize(){ return this->FaninSize; }
 int NODE::getOutSize(){ return this->fanout.size(); }
 int NODE::getKind(){ return this->kind; }
 int NODE::getOrder(){ return this->order; }
+int NODE::getLabel(){ return this->label; }
 bool NODE::getDone(){ return this->done; }
+bool NODE::getVisited(){ return this->visited; }
 NODE* NODE::getFanin(int i){ return this->fanin[i]; }
 NODE* NODE::getFanout(int i){ return this->fanout[i]; }
 
 void NODE::setInSize(int s){ this->FaninSize = s; }
 void NODE::setOrder(int o){ this->order = o; }
+void NODE::setLabel(int l){ this->label = l; }
 void NODE::setDone(bool d){ this->done = d; }
+void NODE::setVisited(bool v){ this->visited = v; }
 void NODE::setFanin(int i, NODE *f){ this->fanin[i] = f; }
 
 void NODE::addFanout(NODE *n){ this->fanout.push_back(n); }
@@ -43,12 +49,13 @@ void NODE::print(){
     std::cout << "ID: " << this->ID << std::endl;
     std::cout << "Order: " << this->order << std::endl;
     std::cout << "Kind: " << this->kind << std::endl;
-    std::cout << "Done: " << this->done << std::endl;
+    //std::cout << "Done: " << this->done << std::endl;
+    std::cout << "Visited: " << this->visited << std::endl;
     std::cout << "Fanin size: " << this->FaninSize << std::endl;
     if(this->FaninSize != 0) std::cout << "Fanin 1: " << this->fanin[0]->getID();
     if(this->FaninSize == 2) std::cout << "\tFanin 2: " << this->fanin[1]->getID();
     std::cout << std::endl;
-    
+
     int i=1;
     std::cout << "Fanout size: " << this->fanout.size() << std::endl;
     for(auto it = this->fanout.begin(); it != this->fanout.end(); ++it, ++i){

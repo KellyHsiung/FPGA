@@ -4,7 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
-#include <queue>
+#include <stack>
 #include "NODE.h"
 
 template <class T>
@@ -22,29 +22,9 @@ bool find(std::vector<NODE *> &n, int &id){
     }
     return false;
 }
+void topologicalSort(std::vector<NODE *> &nodes);
+void label(std::vector<NODE *> &nodes);
 
-/* sort nodes by topological order */
-void topologicalSort(std::vector<NODE *> &nodes){
-    
-    std::queue<NODE *> nodeQueue;
-    for(auto it = nodes.begin(); it != nodes.end(); ++it){
-        if((*it)->getKind() == 0) nodeQueue.push( (*it) );
-    }
-
-    int order = 0;
-    while( !nodeQueue.empty() ){
-        NODE *temp = nodeQueue.front();
-        nodeQueue.pop();
-        if(temp->getOrder() == -1){
-            temp->setOrder(order);
-            ++order;
-        }
-        for(int i=0; i<temp->getOutSize(); ++i){
-            if( temp->getFanout(i)->getOrder() == -1 )
-                nodeQueue.push(temp->getFanout(i));
-        }
-    }
-}
 
 void label(std::vector<NODE *> &nodes){
 
@@ -134,9 +114,61 @@ int main(int argc, char** argv){
 
     topologicalSort(nodes);
     std::sort(nodes.begin(), nodes.end(), compareOrder<NODE>);
-    for(auto it = nodes.begin(); it != nodes.end(); ++it) 
-        (*it)->print();
+
     //label(nodes);
 
     return 0;
+}
+
+
+/* sort nodes by topological order */
+void topologicalSort(std::vector<NODE *> &nodes){
+    
+    std::stack<NODE *> nodeStack;
+    //push PIs into stack nodeStack
+    for(auto it = nodes.begin(); it != nodes.end(); ++it){
+        if((*it)->getKind() == 0) nodeStack.push( (*it) );
+    }
+    //use DFS to travel all nodes
+    std::stack<NODE *> orderStack;
+    while( !nodeStack.empty() ){
+        NODE *temp = nodeStack.top();
+        nodeStack.pop();
+
+        std::stack<NODE *> tempStack;
+        tempStack.push(temp);
+
+        while( !tempStack.empty() ){
+            temp = tempStack.top();
+            NODE *out;
+            bool flag = true;
+            //push a fanout of temp which hasn't been visited into tempStack
+            for(int i=0; i<temp->getOutSize(); ++i){
+                out = temp->getFanout(i);
+                if( !out->getVisited() ){
+                    tempStack.push(out);
+                    flag = false;
+                    break;
+                }
+            }
+            //all the fanouts of temp have already been visited
+            if(flag){
+                temp->setVisited(true);
+                orderStack.push(temp);
+                tempStack.pop();
+            //out does not have any fanout
+            }else if(out->getOutSize() == 0){
+                out->setVisited(true);
+                orderStack.push(out);
+                tempStack.pop();
+            }
+        }
+    }
+    int order = 0;
+    while( !orderStack.empty() ){
+        NODE *temp = orderStack.top();
+        temp->setOrder(order);
+        ++order;
+        orderStack.pop();
+    }
 }
