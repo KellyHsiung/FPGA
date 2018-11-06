@@ -27,7 +27,40 @@ void label(std::vector<NODE *> &nodes);
 
 
 void label(std::vector<NODE *> &nodes){
+    for(auto it = nodes.begin(); it != nodes.end(); ++it){
+        if( (*it)->getKind() == 0 ){ 
+            (*it)->setLabel(0);
+            continue;
+        }
 
+        //It maximal label of the fanin(s) is 0, *it gets a label number as 1 
+        if( (*it)->getInSize() == 1 ){
+            if( (*it)->getFanin(0)->getLabel() == 0 ){
+                (*it)->setLabel(1);
+                continue;
+            }
+        }else if( (*it)->getFanin(0)->getLabel() == 0 && (*it)->getFanin(1)->getLabel() == 0 ){
+            (*it)->setLabel(1);
+            continue;
+        }
+        
+        //get the fanin(s) with maximal label
+        std::vector<NODE *> maxLabel;
+        if( (*it)->getInSize() == 1 || (*it)->getFanin(0)->getLabel() > (*it)->getFanin(1)->getLabel() )
+            maxLabel.push_back( (*it)->getFanin(0) );
+        else if( (*it)->getFanin(0)->getLabel() < (*it)->getFanin(1)->getLabel() )
+            maxLabel.push_back( (*it)->getFanin(1) );
+        else{
+            maxLabel.push_back( (*it)->getFanin(0) );
+            maxLabel.push_back( (*it)->getFanin(1) );
+        }
+        
+        
+        //find label
+            
+
+
+    }
 }
 
 int main(int argc, char** argv){
@@ -112,11 +145,13 @@ int main(int argc, char** argv){
     // for(auto it = nodes.begin(); it != nodes.end(); ++it) 
     //     (*it)->print();
 
+    //sort the nodes by topological order
     topologicalSort(nodes);
     std::sort(nodes.begin(), nodes.end(), compareOrder<NODE>);
 
-    //label(nodes);
-
+    label(nodes);
+    for(auto it = nodes.begin(); it != nodes.end(); ++it) 
+        (*it)->print();
     return 0;
 }
 
