@@ -6,6 +6,7 @@ NODE::NODE(int id, int kind){
     this->FaninSize = 0;
     this->FanoutSize = 0;
     this->order = -1;
+    this->label = -1;
     this->kind = kind;
     this->done = false;
     this->visited = false;
@@ -19,6 +20,7 @@ NODE::NODE(int id){
     this->FanoutSize = 0;
     this->kind = -1;
     this->order = -1;
+    this->label = -1;
     this->done = false;
     this->visited = false;
     this->fanin[0] = NULL;
@@ -49,8 +51,9 @@ void NODE::print(){
     std::cout << "ID: " << this->ID << std::endl;
     std::cout << "Order: " << this->order << std::endl;
     std::cout << "Kind: " << this->kind << std::endl;
+    std::cout << "Label: " << this->label << std::endl;
     //std::cout << "Done: " << this->done << std::endl;
-    std::cout << "Visited: " << this->visited << std::endl;
+    //std::cout << "Visited: " << this->visited << std::endl;
     std::cout << "Fanin size: " << this->FaninSize << std::endl;
     if(this->FaninSize != 0) std::cout << "Fanin 1: " << this->fanin[0]->getID();
     if(this->FaninSize == 2) std::cout << "\tFanin 2: " << this->fanin[1]->getID();
