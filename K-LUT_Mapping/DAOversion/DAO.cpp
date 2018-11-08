@@ -5,7 +5,14 @@
 #include <algorithm>
 #include <cstdlib>
 #include <stack>
+#include <queue>
+#include <set>
 #include "NODE.h"
+#include "LUT.h"
+
+#define PI 0
+#define PO 1
+#define Gate 2
 
 template <class T>
 bool compare(T* const&one, T* const&two){
@@ -23,45 +30,65 @@ bool find(std::vector<NODE *> &n, int &id){
     return false;
 }
 void topologicalSort(std::vector<NODE *> &nodes);
-void label(std::vector<NODE *> &nodes);
+void label(std::vector<NODE *> &nodes, const int &K);
+void mapping(std::vector<NODE *> &nodes, std::set<LUT *> luts);
 
-
-void label(std::vector<NODE *> &nodes){
+void mapping(std::vector<NODE *> &nodes, std::set<LUT *> luts){
+    
+    std::vector<NODE *> nodeStack;
     for(auto it = nodes.begin(); it != nodes.end(); ++it){
-        if( (*it)->getKind() == 0 ){ 
-            (*it)->setLabel(0);
-            continue;
-        }
-
-        //It maximal label of the fanin(s) is 0, *it gets a label number as 1 
-        if( (*it)->getInSize() == 1 ){
-            if( (*it)->getFanin(0)->getLabel() == 0 ){
-                (*it)->setLabel(1);
-                continue;
-            }
-        }else if( (*it)->getFanin(0)->getLabel() == 0 && (*it)->getFanin(1)->getLabel() == 0 ){
-            (*it)->setLabel(1);
-            continue;
-        }
-        
-        //get the fanin(s) with maximal label
-        std::vector<NODE *> maxLabel;
-        if( (*it)->getInSize() == 1 || (*it)->getFanin(0)->getLabel() > (*it)->getFanin(1)->getLabel() )
-            maxLabel.push_back( (*it)->getFanin(0) );
-        else if( (*it)->getFanin(0)->getLabel() < (*it)->getFanin(1)->getLabel() )
-            maxLabel.push_back( (*it)->getFanin(1) );
-        else{
-            maxLabel.push_back( (*it)->getFanin(0) );
-            maxLabel.push_back( (*it)->getFanin(1) );
-        }
-        
-        
-        //find label
-            
-
-
+        if( (*it)->getKind() == PO ) nodeStack.push_back( (*it) );
     }
+    
+    int i = 0;
+    while( nodeStack.size() != 0 ){
+        
+        NODE *temp = nodeStack.back();
+        nodeStack.pop_back();
+        LUT* lut = new LUT( temp->getID() );
+
+        //find if this LUT with root temp has already existed or not
+        auto lutIt = luts.find(lut);
+        if( lutIt != luts.end() ) continue;
+        ++i;
+        int label = temp->getLabel();   //label of root
+        std::set<NODE *> faninSet;      //store fanin of LUT
+        std::vector<NODE *> tempStack;  //find ancestor of node
+        tempStack.push_back( temp );
+
+        while( tempStack.size() != 0 ){
+
+            NODE *top = tempStack.back();
+            tempStack.pop_back();
+
+            for(int i=0; i<top->getInSize(); ++i){
+                if( top->getFanin(i)->getLabel() == label ){
+                    tempStack.push_back( top->getFanin(i) );
+
+                    //find if top is in the nodeStack, if yes, remove it from nodeStack
+                    for(auto it = nodeStack.begin(); it != nodeStack.end(); ++it){
+                        if( (*it) == top->getFanin(i) ){
+                            it = nodeStack.erase(it);
+                            break;
+                        }
+                    }
+                }else faninSet.insert( top->getFanin(i) );
+            }
+        }
+
+        tempStack.insert( tempStack.end(), faninSet.begin(), faninSet.end() );
+        std::sort(tempStack.begin(), tempStack.end(), compareOrder<NODE>);
+        for( auto it = tempStack.begin(); it != tempStack.end(); ++it){
+            nodeStack.push_back( *it );
+            lut->addMember( (*it)->getID() );
+        }
+        luts.insert( lut );
+    }
+    std::cout<<i<<"\n";
 }
+
+
+
 
 int main(int argc, char** argv){
 
@@ -90,12 +117,12 @@ int main(int argc, char** argv){
     //read PIs
     for(int i=0; i<PINum; ++i){
         file >> element;
-        nodes.push_back( new NODE(element, 0) );
+        nodes.push_back( new NODE(element, PI) );
     }
     //read POs
     for(int i=0; i<PONum; ++i){
         file >> element;
-        nodes.push_back( new NODE(element, 1) );
+        nodes.push_back( new NODE(element, PO) );
     }
 
     //std::sort(nodes.begin(), nodes.end(), compare<NODE>);
@@ -112,8 +139,8 @@ int main(int argc, char** argv){
         while( iss>>source ) temp.push_back(source);
         fanin.push_back(temp);
 
-        if(!find(nodes, target)){
-            NODE *tempNode = new NODE(target, 2);
+        if( !find(nodes, target) ){
+            NODE *tempNode = new NODE(target, Gate);
             nodes.push_back(tempNode);
         }
     }
@@ -147,11 +174,21 @@ int main(int argc, char** argv){
 
     //sort the nodes by topological order
     topologicalSort(nodes);
-    std::sort(nodes.begin(), nodes.end(), compareOrder<NODE>);
+    
 
-    label(nodes);
-    for(auto it = nodes.begin(); it != nodes.end(); ++it) 
+    int K = atoi(argv[2]);
+    label(nodes, K);
+    
+
+    std::set<LUT *> luts;
+    mapping(nodes, luts);
+    int i =0;
+    for(auto it = luts.begin(); it != luts.end(); ++it){
         (*it)->print();
+        ++i;
+    }
+    std::cout<<i<<"\n";
+
     return 0;
 }
 
@@ -162,7 +199,7 @@ void topologicalSort(std::vector<NODE *> &nodes){
     std::stack<NODE *> nodeStack;
     //push PIs into stack nodeStack
     for(auto it = nodes.begin(); it != nodes.end(); ++it){
-        if((*it)->getKind() == 0) nodeStack.push( (*it) );
+        if((*it)->getKind() == PI) nodeStack.push( (*it) );
     }
     //use DFS to travel all nodes
     std::stack<NODE *> orderStack;
@@ -205,5 +242,62 @@ void topologicalSort(std::vector<NODE *> &nodes){
         temp->setOrder(order);
         ++order;
         orderStack.pop();
+    }
+
+    std::sort(nodes.begin(), nodes.end(), compareOrder<NODE>);
+}
+
+/* label all the nodes */
+void label(std::vector<NODE *> &nodes, const int &K){
+    for(auto it = nodes.begin(); it != nodes.end(); ++it){
+        if( (*it)->getKind() == PI ){ 
+            (*it)->setLabel(0);
+            continue;
+        }
+
+        //It maximal label of the fanin(s) is 0, *it gets a label number as 1 
+        if( (*it)->getInSize() == 1 ){
+            if( (*it)->getFanin(0)->getLabel() == 0 ){
+                (*it)->setLabel(1);
+                continue;
+            }
+        }else if( (*it)->getFanin(0)->getLabel() == 0 && (*it)->getFanin(1)->getLabel() == 0 ){
+            (*it)->setLabel(1);
+            continue;
+        }
+
+        
+        int size = 0;
+        //get the fanin(s) with maximal label
+        std::stack<NODE *> maxLabelStack;
+        if( (*it)->getInSize() == 1 || (*it)->getFanin(0)->getLabel() > (*it)->getFanin(1)->getLabel() ){
+            maxLabelStack.push( (*it)->getFanin(0) );
+            size = 1;
+        }else if( (*it)->getFanin(0)->getLabel() < (*it)->getFanin(1)->getLabel() ){
+            size = 1;
+            maxLabelStack.push( (*it)->getFanin(1) );
+        }else{
+            maxLabelStack.push( (*it)->getFanin(0) );
+            maxLabelStack.push( (*it)->getFanin(1) );
+        }
+        
+        
+        //find label of (*it)
+        NODE *temp = maxLabelStack.top();
+        int maxLabel = temp->getLabel();
+        std::set<NODE *> cutNode;
+        while( !maxLabelStack.empty() ){
+            temp = maxLabelStack.top();
+            maxLabelStack.pop();
+            
+            for(int i=0; i<temp->getInSize(); ++i){
+                if( temp->getFanin(i)->getLabel() == maxLabel )
+                    maxLabelStack.push( temp->getFanin(i) );
+                else cutNode.insert( temp->getFanin(i) );
+            }
+        }
+        size += (int)cutNode.size();
+        if( size <= K) (*it)->setLabel(maxLabel);
+        else (*it)->setLabel( maxLabel+1 );
     }
 }
