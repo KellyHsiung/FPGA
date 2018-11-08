@@ -33,74 +33,7 @@ void topologicalSort(std::vector<NODE *> &nodes);
 void label(std::vector<NODE *> &nodes, const int &K);
 void mapping(std::vector<NODE *> &nodes, std::set<LUT *> &luts);
 
-void mapping(std::vector<NODE *> &nodes, std::set<LUT *> &luts){
-    
-    std::vector<NODE *> nodeStack;
-    for(auto it = nodes.begin(); it != nodes.end(); ++it){
-        if( (*it)->getKind() == PO ) nodeStack.push_back( (*it) );
-    }
 
-
-    // for(auto it = nodeStack.begin(); it != nodeStack.end(); ++it){
-    //     std::cout<<(*it)->getID()<<"\t";
-    // }
-    // std::cout<<std::endl;
-    
-    // int i = 0;
-    while( nodeStack.size() != 0 ){
-        
-        NODE *temp = nodeStack.back();
-        nodeStack.pop_back();
-
-        //find if this LUT with root temp has already existed, if yes, then skip
-        if( temp->getDone() ) continue;
-
-        int label = temp->getLabel();   //label of root
-        LUT *lut = new LUT( temp->getID() );
-
-        std::set<NODE *> faninSet;      //store fanin of LUT
-        std::vector<NODE *> tempStack;  //find ancestor of node
-        tempStack.push_back( temp );
-
-        while( tempStack.size() != 0 ){
-
-            NODE *top = tempStack.back();
-            tempStack.pop_back();
-
-            for(int i=0; i<top->getInSize(); ++i){
-                if( top->getFanin(i)->getLabel() == label ){
-                    tempStack.push_back( top->getFanin(i) );
-
-                    //find if top is in the nodeStack, if yes, remove it from nodeStack
-                    for(auto it = nodeStack.begin(); it != nodeStack.end(); ++it){
-                        if( (*it) == top->getFanin(i) ){
-                            it = nodeStack.erase(it);
-                            break;
-                        }
-                    }
-                }else faninSet.insert( top->getFanin(i) );
-            }
-        }
-
-        tempStack.insert( tempStack.end(), faninSet.begin(), faninSet.end() );
-        std::sort(tempStack.begin(), tempStack.end(), compareOrder<NODE>);
-        for( auto it = tempStack.begin(); it != tempStack.end(); ++it){
-            if( (*it)->getKind() != PI) nodeStack.push_back( *it );
-            lut->addMember( (*it)->getID() );
-        }
-        luts.insert( lut );
-        temp->setDone(true);
-        //break;
-        // ++i;
-
-
-        // for(auto it = nodeStack.begin(); it != nodeStack.end(); ++it){
-        //     std::cout<<(*it)->getID()<<"\t";
-        // }
-        // std::cout<<std::endl;
-    }
-    // std::cout<<i<<"\n";
-}
 
 
 
@@ -184,17 +117,13 @@ int main(int argc, char** argv){
 
         delete temp;
     }
-    // for(auto it = nodes.begin(); it != nodes.end(); ++it) 
-    //     (*it)->print();
 
     //sort the nodes by topological order
     topologicalSort(nodes);
     
-
     int K = atoi(argv[2]);
     label(nodes, K);
     
-
     std::set<LUT *> luts;
     mapping(nodes, luts);
 
@@ -205,12 +134,7 @@ int main(int argc, char** argv){
             file << (*it)->getFanin(i)<<" ";
         file<<std::endl;
     }
-    // int i =0;
-    // for(auto it = luts.begin(); it != luts.end(); ++it){
-    //     //(*it)->print();
-    //     ++i;
-    // }
-    // std::cout<<i<<"\n";
+    file.close();
 
     return 0;
 }
@@ -322,5 +246,59 @@ void label(std::vector<NODE *> &nodes, const int &K){
         size += (int)cutNode.size();
         if( size <= K) (*it)->setLabel(maxLabel);
         else (*it)->setLabel( maxLabel+1 );
+    }
+}
+
+/* mapping into LUT */
+void mapping(std::vector<NODE *> &nodes, std::set<LUT *> &luts){
+    
+    std::vector<NODE *> nodeStack;
+    for(auto it = nodes.begin(); it != nodes.end(); ++it){
+        if( (*it)->getKind() == PO ) nodeStack.push_back( (*it) );
+    }
+
+    while( nodeStack.size() != 0 ){
+        
+        NODE *temp = nodeStack.back();
+        nodeStack.pop_back();
+
+        //find if this LUT with root temp has already existed, if yes, then skip
+        if( temp->getDone() ) continue;
+
+        int label = temp->getLabel();   //label of root
+        LUT *lut = new LUT( temp->getID() );
+
+        std::set<NODE *> faninSet;      //store fanin of LUT
+        std::vector<NODE *> tempStack;  //find ancestor of node
+        tempStack.push_back( temp );
+
+        while( tempStack.size() != 0 ){
+
+            NODE *top = tempStack.back();
+            tempStack.pop_back();
+
+            for(int i=0; i<top->getInSize(); ++i){
+                if( top->getFanin(i)->getLabel() == label ){
+                    tempStack.push_back( top->getFanin(i) );
+
+                    //find if top is in the nodeStack, if yes, remove it from nodeStack
+                    for(auto it = nodeStack.begin(); it != nodeStack.end(); ++it){
+                        if( (*it) == top->getFanin(i) ){
+                            it = nodeStack.erase(it);
+                            break;
+                        }
+                    }
+                }else faninSet.insert( top->getFanin(i) );
+            }
+        }
+
+        tempStack.insert( tempStack.end(), faninSet.begin(), faninSet.end() );
+        std::sort(tempStack.begin(), tempStack.end(), compareOrder<NODE>);
+        for( auto it = tempStack.begin(); it != tempStack.end(); ++it){
+            if( (*it)->getKind() != PI) nodeStack.push_back( *it );
+            lut->addMember( (*it)->getID() );
+        }
+        luts.insert( lut );
+        temp->setDone(true);
     }
 }
