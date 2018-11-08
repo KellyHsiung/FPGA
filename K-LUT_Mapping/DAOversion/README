@@ -1,0 +1,11 @@
+--How to Compile
+In this directory, enter the following command:
+$ make
+It will generate the executable file " DAO " in the current directory 
+If you want to remove it please enter the following command
+$ make clean
+
+--How to Run
+Usage: ./<exe> <input file path> <K> <output file path>
+e.g.:
+./DAO ./testcase/alu4.aag 4 alu4.out
