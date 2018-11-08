@@ -31,27 +31,33 @@ bool find(std::vector<NODE *> &n, int &id){
 }
 void topologicalSort(std::vector<NODE *> &nodes);
 void label(std::vector<NODE *> &nodes, const int &K);
-void mapping(std::vector<NODE *> &nodes, std::set<LUT *> luts);
+void mapping(std::vector<NODE *> &nodes, std::set<LUT *> &luts);
 
-void mapping(std::vector<NODE *> &nodes, std::set<LUT *> luts){
+void mapping(std::vector<NODE *> &nodes, std::set<LUT *> &luts){
     
     std::vector<NODE *> nodeStack;
     for(auto it = nodes.begin(); it != nodes.end(); ++it){
         if( (*it)->getKind() == PO ) nodeStack.push_back( (*it) );
     }
+
+
+    // for(auto it = nodeStack.begin(); it != nodeStack.end(); ++it){
+    //     std::cout<<(*it)->getID()<<"\t";
+    // }
+    // std::cout<<std::endl;
     
-    int i = 0;
+    // int i = 0;
     while( nodeStack.size() != 0 ){
         
         NODE *temp = nodeStack.back();
         nodeStack.pop_back();
-        LUT* lut = new LUT( temp->getID() );
 
-        //find if this LUT with root temp has already existed or not
-        auto lutIt = luts.find(lut);
-        if( lutIt != luts.end() ) continue;
-        ++i;
+        //find if this LUT with root temp has already existed, if yes, then skip
+        if( temp->getDone() ) continue;
+
         int label = temp->getLabel();   //label of root
+        LUT *lut = new LUT( temp->getID() );
+
         std::set<NODE *> faninSet;      //store fanin of LUT
         std::vector<NODE *> tempStack;  //find ancestor of node
         tempStack.push_back( temp );
@@ -79,12 +85,21 @@ void mapping(std::vector<NODE *> &nodes, std::set<LUT *> luts){
         tempStack.insert( tempStack.end(), faninSet.begin(), faninSet.end() );
         std::sort(tempStack.begin(), tempStack.end(), compareOrder<NODE>);
         for( auto it = tempStack.begin(); it != tempStack.end(); ++it){
-            nodeStack.push_back( *it );
+            if( (*it)->getKind() != PI) nodeStack.push_back( *it );
             lut->addMember( (*it)->getID() );
         }
         luts.insert( lut );
+        temp->setDone(true);
+        //break;
+        // ++i;
+
+
+        // for(auto it = nodeStack.begin(); it != nodeStack.end(); ++it){
+        //     std::cout<<(*it)->getID()<<"\t";
+        // }
+        // std::cout<<std::endl;
     }
-    std::cout<<i<<"\n";
+    // std::cout<<i<<"\n";
 }
 
 
@@ -182,12 +197,20 @@ int main(int argc, char** argv){
 
     std::set<LUT *> luts;
     mapping(nodes, luts);
-    int i =0;
+
+    file.open(argv[3], std::ifstream::out);
     for(auto it = luts.begin(); it != luts.end(); ++it){
-        (*it)->print();
-        ++i;
+        file << (*it)->getID() << " ";
+        for(int i = 0; i<(*it)->getSize(); ++i)
+            file << (*it)->getFanin(i)<<" ";
+        file<<std::endl;
     }
-    std::cout<<i<<"\n";
+    // int i =0;
+    // for(auto it = luts.begin(); it != luts.end(); ++it){
+    //     //(*it)->print();
+    //     ++i;
+    // }
+    // std::cout<<i<<"\n";
 
     return 0;
 }
