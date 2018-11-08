@@ -1,7 +1,7 @@
 CPP = g++ 
 CPPFLAGS = -Wall -std=c++11 -O3
-HERDERS = NODE.h
-SOURCES = DAO.cpp NODE.cpp
+HERDERS = NODE.h LUT.h
+SOURCES = DAO.cpp NODE.cpp LUT.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 EXECUTABLE = DAO
 
