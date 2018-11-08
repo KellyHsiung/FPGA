@@ -49,21 +49,21 @@ void NODE::addFanout(NODE *n){ this->fanout.push_back(n); }
 
 void NODE::print(){
     std::cout << "ID: " << this->ID << std::endl;
-    std::cout << "Order: " << this->order << std::endl;
-    std::cout << "Kind: " << this->kind << std::endl;
+    // std::cout << "Order: " << this->order << std::endl;
+    // std::cout << "Kind: " << this->kind << std::endl;
     std::cout << "Label: " << this->label << std::endl;
     //std::cout << "Done: " << this->done << std::endl;
     //std::cout << "Visited: " << this->visited << std::endl;
-    std::cout << "Fanin size: " << this->FaninSize << std::endl;
-    if(this->FaninSize != 0) std::cout << "Fanin 1: " << this->fanin[0]->getID();
-    if(this->FaninSize == 2) std::cout << "\tFanin 2: " << this->fanin[1]->getID();
-    std::cout << std::endl;
+    // std::cout << "Fanin size: " << this->FaninSize << std::endl;
+    // if(this->FaninSize != 0) std::cout << "Fanin 1: " << this->fanin[0]->getID();
+    // if(this->FaninSize == 2) std::cout << "\tFanin 2: " << this->fanin[1]->getID();
+    // std::cout << std::endl;
 
-    int i=1;
-    std::cout << "Fanout size: " << this->fanout.size() << std::endl;
-    for(auto it = this->fanout.begin(); it != this->fanout.end(); ++it, ++i){
-        std::cout << "Fanout " << i << ": " << (*it)->getID() << "\t";
-        if( i%5 == 0) std::cout << std::endl;
-    }
+    // int i=1;
+    // std::cout << "Fanout size: " << this->fanout.size() << std::endl;
+    // for(auto it = this->fanout.begin(); it != this->fanout.end(); ++it, ++i){
+    //     std::cout << "Fanout " << i << ": " << (*it)->getID() << "\t";
+    //     if( i%5 == 0) std::cout << std::endl;
+    // }
     std::cout << std::endl << std::endl;
 }
